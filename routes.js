@@ -9,3 +9,4 @@ route.get('/', homeController.index);
 //Rotas Login
 route.get('/login/index', loginController.index)
 module.exports = route;
+route.post('/login/register', loginController.register)
