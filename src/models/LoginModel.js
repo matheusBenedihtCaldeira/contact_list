@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
+const bcryptjs = require("bcryptjs");
+
 const LoginSchema = new mongoose.Schema({
   email: { type: String, required: true },
   password: { type: String, required: true },
@@ -13,14 +15,40 @@ class Login {
     this.errors = [];
     this.user = null;
   }
-  async register() {
+
+  async login(){
+    //Chega se os dados passados estão corretos
     this.valida();
     if (this.errors.length > 0) return;
-    try {
-      this.user = await LoginModel.create(this.body);
-    } catch (e) {
-      console.log(e);
+    this.user = await LoginModel.findOne({ email: this.body.email });
+    if(!this.user){
+      this.errors.push("Usário não cadastrado")
+      return
     }
+    if(!bcryptjs.compareSync(this.body.password, this.user.password)){
+      this.errors.push('Senha invalida')
+      this.user = null;
+      return;
+    }
+  }
+
+
+  async register() {
+    //Chega se os dados passados estão corretos
+    this.valida();
+    if (this.errors.length > 0) return;
+    //Chega se o usuário já esta cadastrado
+    await this.userExistCheck();
+    if (this.errors.length > 0) return;
+
+    //Transforma a senha em um hash
+    const salt = bcryptjs.genSaltSync();
+    this.body.password = bcryptjs.hashSync(this.body.password, salt);
+    this.user = await LoginModel.create(this.body);
+  }
+  async userExistCheck() {
+    this.user = await LoginModel.findOne({ email: this.body.email });
+    if (this.user) this.errors.push("E-mail já cadastrado");
   }
   valida() {
     this.cleanUp();
