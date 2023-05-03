@@ -20,3 +20,12 @@ exports.csrfMiddleware = (req, res, next) => {
   res.locals.csrfToken = req.csrfToken();
   next();
 };
+
+exports.loginRequired = (req, res, next) => {
+  if(!req.session.user){
+    req.flash('errors', "É necessario que o login seja realizado para cadastrar um novo contato")
+    req.session.save(() => res.redirect('/'))
+    return;
+  }
+  next();
+}
